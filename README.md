@@ -19,8 +19,8 @@ Esta aplicación web, construida con Streamlit, identifica automáticamente a qu
 1. **Clona** el repositorio:
 
 ```bash
-git clone <url-del-repositorio>
-cd <nombre-del-repositorio>
+git clone https://github.com/RodrigoVarasLopez/AAKA.git
+cd AAKA
 ```
 
 2. **Instala las dependencias:**
