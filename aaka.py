@@ -2,7 +2,7 @@ import streamlit as st
 import openai
 import requests
 
-st.title("AI Recon")
+st.title("🔑 AAKA 🕵️‍♂️✨")
 
 # Input API Key
 api_key = st.text_input("Enter your API KEY", type="password")
