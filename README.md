@@ -1,6 +1,6 @@
 # 🔑 AAKA AI API Key Analyzer 🕵️‍♂️✨
 
-This web application built with Streamlit automatically identifies which AI platform (OpenAI, DeepSeek, Anthropic) an API key belongs to and provides a quick overview of the available resources on that platform. You can test the app directly at the following link: [AAKA Demo](https://aaka89.streamlit.app/)
+This web application built with Streamlit automatically identifies which AI platform (OpenAI, DeepSeek, Anthropic) an API key belongs to and provides a quick overview of the available resources on that platform. You can test the app directly at the following link: [AAKA](https://aaka89.streamlit.app/)
 
 ## 🚀 Main Features
 
