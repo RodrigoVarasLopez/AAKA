@@ -3,70 +3,76 @@ import requests
 from openai import OpenAI
 import anthropic
 
-# App Title and Description
+# App title and description
 st.title("🔑 AAKA AI API Key Analyzer 🕵️‍♂️✨")
 st.markdown("""
-**AAKA (AI API Key Analyzer)** detecta automáticamente la plataforma asociada con una clave API (OpenAI, DeepSeek, Anthropic) y muestra información sobre los modelos, asistentes y vector stores disponibles.
+**AAKA (AI API Key Analyzer)** automatically detects the platform associated with an API key (OpenAI, DeepSeek, Anthropic) and displays available models, assistants, and vector stores.
 """)
 
-# Input: API Key
-api_key = st.text_input("🔐 Ingresa tu API KEY", type="password")
+# Input for API key
+api_key = st.text_input("🔐 Enter your API KEY", type="password")
 
 
-# ✅ Validación real para Anthropic usando modelo disponible (haiku)
+# Validate Anthropic API key using Claude 3 Haiku (most accessible model)
 def is_valid_anthropic_key(api_key: str) -> tuple[bool, str]:
     try:
         client = anthropic.Anthropic(api_key=api_key)
         message = client.messages.create(
-            model="claude-3-haiku-20240307",  # modelo más accesible
-            max_tokens=5,
-            messages=[{"role": "user", "content": "Hello"}]
+            model="claude-3-haiku-20240307",  # the most universally available Claude 3 model
+            max_tokens=10,
+            messages=[
+                {"role": "user", "content": "What is artificial intelligence?"}
+            ]
         )
         return True, "OK"
     except Exception as e:
         return False, str(e)
 
 
-# 🔍 Detección de plataforma
+# Identify the platform based on the API key
 def identify_platform(key):
     if key.startswith("sk-") or key.startswith("pk-"):
+        # Try OpenAI
         try:
             client = OpenAI(api_key=key)
             client.models.list()
             return "OpenAI"
         except:
+            # If not OpenAI, try DeepSeek with custom base URL
             try:
                 client = OpenAI(api_key=key, base_url="https://api.deepseek.com")
                 client.models.list()
                 return "DeepSeek"
             except:
                 return "Unknown or Invalid Key"
+
     elif key.startswith("sk-ant-"):
         valid, error = is_valid_anthropic_key(key)
         if valid:
             return "Anthropic"
         else:
-            st.error("❌ Error al validar clave de Anthropic:")
+            st.error("❌ Anthropic key validation failed:")
             st.code(error)
             return "Unknown or Invalid Anthropic Key"
+
     else:
         return "Unknown Platform"
 
 
-# 🔘 Botón principal
-if st.button("🔍 Identificar Plataforma de API"):
+# Trigger platform detection when button is clicked
+if st.button("🔍 Identify API Platform"):
     if not api_key:
-        st.error("Por favor ingresa una API Key.")
+        st.error("Please enter an API key.")
     else:
-        with st.spinner("Consultando plataforma..."):
+        with st.spinner("Detecting platform..."):
             platform = identify_platform(api_key)
-            st.success(f"✅ Plataforma Detectada: **{platform}**")
+            st.success(f"✅ Platform Detected: **{platform}**")
 
             # ---- OPENAI ----
             if platform == "OpenAI":
                 client = OpenAI(api_key=api_key)
 
-                # Assistants
+                # List Assistants
                 try:
                     assistants = client.beta.assistants.list().data
                     st.subheader("🤖 Assistants")
@@ -74,11 +80,11 @@ if st.button("🔍 Identificar Plataforma de API"):
                         for assistant in assistants:
                             st.write(f"- {assistant.name} (ID: `{assistant.id}`)")
                     else:
-                        st.info("No se encontraron asistentes.")
+                        st.info("No assistants found.")
                 except Exception:
-                    st.error("No se pudo obtener la lista de assistants.")
+                    st.error("Failed to fetch assistants.")
 
-                # Vector Stores
+                # List Vector Stores
                 try:
                     vector_stores = client.vector_stores.list().data
                     st.subheader("🗂️ Vector Stores (RAGs)")
@@ -86,53 +92,54 @@ if st.button("🔍 Identificar Plataforma de API"):
                         for store in vector_stores:
                             st.write(f"- {store.name} (ID: `{store.id}`)")
                     else:
-                        st.info("No se encontraron vector stores.")
+                        st.info("No vector stores found.")
                 except Exception:
-                    st.error("No se pudo obtener la lista de vector stores.")
+                    st.error("Failed to fetch vector stores.")
 
-                # Models
+                # List Models
                 try:
                     models = client.models.list().data
-                    st.subheader("📚 Modelos Disponibles")
-                    st.caption(f"Total de modelos: {len(models)}")
+                    st.subheader("📚 Available Models")
+                    st.caption(f"Total models: {len(models)}")
                     for model in models:
                         st.write(model.id)
                 except Exception:
-                    st.error("No se pudo obtener la lista de modelos.")
+                    st.error("Failed to fetch models.")
 
             # ---- DEEPSEEK ----
             elif platform == "DeepSeek":
                 client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
                 try:
                     models = client.models.list().data
-                    st.subheader("📚 Modelos Disponibles (DeepSeek)")
+                    st.subheader("📚 Available Models (DeepSeek)")
                     if models:
                         for model in models:
                             st.write(f"- {model.id}")
                     else:
-                        st.info("No se encontraron modelos.")
+                        st.info("No models found.")
                 except Exception as e:
-                    st.error("Error al obtener modelos de DeepSeek.")
+                    st.error("Failed to fetch models from DeepSeek.")
                     st.code(str(e))
 
             # ---- ANTHROPIC ----
             elif platform == "Anthropic":
                 try:
-                    st.subheader("📚 Modelos Disponibles (Anthropic)")
+                    st.subheader("📚 Commonly Available Models (Anthropic)")
                     st.markdown("""
-                    Anthropic no permite listar modelos directamente por la API.  
-                    Aquí tienes algunos modelos disponibles comúnmente:
+                    Anthropic doesn't support listing models via API.  
+                    However, the following are commonly available:
                     """)
-                    modelos = [
+                    models = [
                         "claude-3-haiku-20240307",
                         "claude-3-sonnet-20240229",
                         "claude-3-opus-20240229"
                     ]
-                    for model in modelos:
+                    for model in models:
                         st.write(f"- {model}")
                 except Exception as e:
-                    st.error("No se pudo procesar la clave de Anthropic.")
+                    st.error("Could not process Anthropic key.")
                     st.code(str(e))
 
+            # ---- UNKNOWN ----
             else:
-                st.warning("⚠️ No fue posible obtener detalles adicionales para esta plataforma.")
+                st.warning("⚠️ Could not retrieve additional information for this platform.")
