@@ -13,21 +13,21 @@ st.markdown("""
 api_key = st.text_input("🔐 Ingresa tu API KEY", type="password")
 
 
-# Función auxiliar para detectar clave válida de Anthropic
-def is_valid_anthropic_key(api_key: str) -> bool:
+# ✅ Validación real para Anthropic
+def is_valid_anthropic_key(api_key: str) -> tuple[bool, str]:
     try:
         client = anthropic.Anthropic(api_key=api_key)
         message = client.messages.create(
-            model="claude-3-sonnet-20240229",  # modelo oficial
+            model="claude-3-sonnet-20240229",  # modelo oficial disponible
             max_tokens=5,
             messages=[{"role": "user", "content": "Hello"}]
         )
-        return True
+        return True, "OK"
     except Exception as e:
-        return False
+        return False, str(e)
 
 
-# Plataforma
+# 🔍 Detección de plataforma
 def identify_platform(key):
     if key.startswith("sk-") or key.startswith("pk-"):
         try:
@@ -42,12 +42,18 @@ def identify_platform(key):
             except:
                 return "Unknown or Invalid Key"
     elif key.startswith("sk-ant-"):
-        return "Anthropic" if is_valid_anthropic_key(key) else "Unknown or Invalid Anthropic Key"
+        valid, error = is_valid_anthropic_key(key)
+        if valid:
+            return "Anthropic"
+        else:
+            st.error("❌ Error al validar clave de Anthropic:")
+            st.code(error)
+            return "Unknown or Invalid Anthropic Key"
     else:
         return "Unknown Platform"
 
 
-# On Button Click
+# 🔘 Botón principal
 if st.button("🔍 Identificar Plataforma de API"):
     if not api_key:
         st.error("Por favor ingresa una API Key.")
