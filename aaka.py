@@ -13,12 +13,12 @@ st.markdown("""
 api_key = st.text_input("🔐 Ingresa tu API KEY", type="password")
 
 
-# ✅ Validación real para Anthropic
+# ✅ Validación real para Anthropic usando modelo disponible (haiku)
 def is_valid_anthropic_key(api_key: str) -> tuple[bool, str]:
     try:
         client = anthropic.Anthropic(api_key=api_key)
         message = client.messages.create(
-            model="claude-3-sonnet-20240229",  # modelo oficial disponible
+            model="claude-3-haiku-20240307",  # modelo más accesible
             max_tokens=5,
             messages=[{"role": "user", "content": "Hello"}]
         )
@@ -124,9 +124,9 @@ if st.button("🔍 Identificar Plataforma de API"):
                     Aquí tienes algunos modelos disponibles comúnmente:
                     """)
                     modelos = [
-                        "claude-3-opus-20240229",
+                        "claude-3-haiku-20240307",
                         "claude-3-sonnet-20240229",
-                        "claude-3-haiku-20240307"
+                        "claude-3-opus-20240229"
                     ]
                     for model in modelos:
                         st.write(f"- {model}")
