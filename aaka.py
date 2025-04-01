@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from openai import OpenAI
+import anthropic
 
 # App Title and Description
 st.title("🔑 AAKA AI API Key Analyzer 🕵️‍♂️✨")
@@ -10,6 +11,20 @@ st.markdown("""
 
 # Input: API Key
 api_key = st.text_input("🔐 Ingresa tu API KEY", type="password")
+
+
+# Función auxiliar para detectar clave válida de Anthropic
+def is_valid_anthropic_key(api_key: str) -> bool:
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        message = client.messages.create(
+            model="claude-3-sonnet-20240229",  # modelo oficial
+            max_tokens=5,
+            messages=[{"role": "user", "content": "Hello"}]
+        )
+        return True
+    except Exception as e:
+        return False
 
 
 # Plataforma
@@ -27,9 +42,7 @@ def identify_platform(key):
             except:
                 return "Unknown or Invalid Key"
     elif key.startswith("sk-ant-"):
-        headers = {"x-api-key": key}
-        response = requests.get("https://api.anthropic.com/v1/models", headers=headers)
-        return "Anthropic" if response.status_code == 200 else "Unknown or Invalid Anthropic Key"
+        return "Anthropic" if is_valid_anthropic_key(key) else "Unknown or Invalid Anthropic Key"
     else:
         return "Unknown Platform"
 
@@ -98,18 +111,22 @@ if st.button("🔍 Identificar Plataforma de API"):
 
             # ---- ANTHROPIC ----
             elif platform == "Anthropic":
-                headers = {"x-api-key": api_key}
-                response = requests.get("https://api.anthropic.com/v1/models", headers=headers)
-                if response.status_code == 200:
-                    models = response.json().get("data", [])
+                try:
                     st.subheader("📚 Modelos Disponibles (Anthropic)")
-                    if models:
-                        for model in models:
-                            st.write(f"- {model.get('id')}")
-                    else:
-                        st.info("No se encontraron modelos.")
-                else:
-                    st.error("No se pudo obtener la lista de modelos de Anthropic.")
+                    st.markdown("""
+                    Anthropic no permite listar modelos directamente por la API.  
+                    Aquí tienes algunos modelos disponibles comúnmente:
+                    """)
+                    modelos = [
+                        "claude-3-opus-20240229",
+                        "claude-3-sonnet-20240229",
+                        "claude-3-haiku-20240307"
+                    ]
+                    for model in modelos:
+                        st.write(f"- {model}")
+                except Exception as e:
+                    st.error("No se pudo procesar la clave de Anthropic.")
+                    st.code(str(e))
 
             else:
                 st.warning("⚠️ No fue posible obtener detalles adicionales para esta plataforma.")
