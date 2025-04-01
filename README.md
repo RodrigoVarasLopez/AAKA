@@ -32,7 +32,7 @@ pip install streamlit openai requests
 ## 🏃‍♂️ Run the Application
 
 ```bash
-streamlit run api_key_analyzer.py
+streamlit run aaka.py
 ```
 
 A window will automatically open in your browser at `http://localhost:8501`.
