@@ -12,13 +12,16 @@ st.markdown("""
 # Input for API key
 api_key = st.text_input("🔐 Enter your API KEY", type="password")
 
+# Preview the entered key (first & last few chars for debugging)
+if api_key:
+    st.caption(f"🔍 Key format preview: `{api_key[:8]}...{api_key[-4:]}`")
 
-# Validate Anthropic API key using Claude 3 Haiku (most accessible model)
+# Validate Anthropic API key using Claude 3 Haiku
 def is_valid_anthropic_key(api_key: str) -> tuple[bool, str]:
     try:
         client = anthropic.Anthropic(api_key=api_key)
         message = client.messages.create(
-            model="claude-3-haiku-20240307",  # the most universally available Claude 3 model
+            model="claude-3-haiku-20240307",
             max_tokens=10,
             messages=[
                 {"role": "user", "content": "What is artificial intelligence?"}
@@ -28,8 +31,7 @@ def is_valid_anthropic_key(api_key: str) -> tuple[bool, str]:
     except Exception as e:
         return False, str(e)
 
-
-# Identify the platform based on the API key
+# Identify platform by trying OpenAI, DeepSeek, Anthropic
 def identify_platform(key):
     if key.startswith("sk-") or key.startswith("pk-"):
         # Try OpenAI
@@ -37,13 +39,15 @@ def identify_platform(key):
             client = OpenAI(api_key=key)
             client.models.list()
             return "OpenAI"
-        except:
-            # If not OpenAI, try DeepSeek with custom base URL
+        except Exception as e_openai:
+            # Try DeepSeek
             try:
                 client = OpenAI(api_key=key, base_url="https://api.deepseek.com")
                 client.models.list()
                 return "DeepSeek"
-            except:
+            except Exception as e_deepseek:
+                st.error("❌ Failed with OpenAI and DeepSeek:")
+                st.code(f"OpenAI: {e_openai}\nDeepSeek: {e_deepseek}")
                 return "Unknown or Invalid Key"
 
     elif key.startswith("sk-ant-"):
@@ -56,10 +60,10 @@ def identify_platform(key):
             return "Unknown or Invalid Anthropic Key"
 
     else:
+        st.error("❌ Unknown key format. Could not match OpenAI, DeepSeek, or Anthropic.")
         return "Unknown Platform"
 
-
-# Trigger platform detection when button is clicked
+# Button to trigger platform detection
 if st.button("🔍 Identify API Platform"):
     if not api_key:
         st.error("Please enter an API key.")
@@ -72,7 +76,7 @@ if st.button("🔍 Identify API Platform"):
             if platform == "OpenAI":
                 client = OpenAI(api_key=api_key)
 
-                # List Assistants
+                # Assistants
                 try:
                     assistants = client.beta.assistants.list().data
                     st.subheader("🤖 Assistants")
@@ -84,7 +88,7 @@ if st.button("🔍 Identify API Platform"):
                 except Exception:
                     st.error("Failed to fetch assistants.")
 
-                # List Vector Stores
+                # Vector Stores
                 try:
                     vector_stores = client.vector_stores.list().data
                     st.subheader("🗂️ Vector Stores (RAGs)")
@@ -96,7 +100,7 @@ if st.button("🔍 Identify API Platform"):
                 except Exception:
                     st.error("Failed to fetch vector stores.")
 
-                # List Models
+                # Models
                 try:
                     models = client.models.list().data
                     st.subheader("📚 Available Models")
@@ -126,8 +130,8 @@ if st.button("🔍 Identify API Platform"):
                 try:
                     st.subheader("📚 Commonly Available Models (Anthropic)")
                     st.markdown("""
-                    Anthropic doesn't support listing models via API.  
-                    However, the following are commonly available:
+                    Anthropic does not allow listing models via API.  
+                    These are some commonly available models:
                     """)
                     models = [
                         "claude-3-haiku-20240307",
