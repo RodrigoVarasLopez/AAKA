@@ -1,5 +1,6 @@
 import streamlit as st
 import requests
+import logging
 from openai import OpenAI
 import anthropic
 
@@ -39,8 +40,8 @@ def identify_platform(key):
         if valid:
             return "Anthropic"
         else:
-            st.error("❌ Anthropic key validation failed:")
-            st.code(error)
+            logging.warning(f"Anthropic key validation error: {error}")
+            st.error("❌ Anthropic key validation failed: Invalid or unauthorized API key.")
             return "Unknown or Invalid Anthropic Key"
 
     # Then try OpenAI and DeepSeek
@@ -55,8 +56,7 @@ def identify_platform(key):
                 client.models.list()
                 return "DeepSeek"
             except Exception as e_deepseek:
-                st.error("❌ Failed with OpenAI and DeepSeek:")
-                st.code(f"OpenAI: {e_openai}\nDeepSeek: {e_deepseek}")
+                st.error("❌ Failed with OpenAI and DeepSeek.")
                 return "Unknown or Invalid Key"
 
     else:
