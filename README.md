@@ -51,7 +51,7 @@ A window will automatically open in your browser at `http://localhost:8501`.
 
 ## 🧑‍💻 Author
 
-Created with ❤️ by [Your Name](https://github.com/yourusername)
+Created with ❤️ by Rodrigo Varas
 
 ## 📜 License
 
