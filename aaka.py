@@ -5,7 +5,7 @@ import requests
 # App Title and Description
 st.title("🔑 AAKA AI API Key Analyzer 🕵️‍♂️✨")
 st.markdown("""
-**AAKA AI API Key Analyzer** detecta automáticamente la plataforma de una clave API ingresada (OpenAI, DeepSeek, Anthropic) y proporciona un resumen de recursos disponibles como modelos, asistentes y almacenes vectoriales.
+**AAKA (AI API Key Analyzer) automatically detects the platform associated with a given API key (OpenAI, DeepSeek, Anthropic) and provides a summary of available resources such as models, assistants, and vector stores.
 """)
 
 # Input: API Key
