@@ -12,11 +12,11 @@ st.markdown("""
 # Input for API key
 api_key = st.text_input("🔐 Enter your API KEY", type="password")
 
-# Preview the entered key (first & last few chars for debugging)
+# Preview the entered key format
 if api_key:
     st.caption(f"🔍 Key format preview: `{api_key[:8]}...{api_key[-4:]}`")
 
-# Validate Anthropic API key using Claude 3 Haiku
+# Validate Anthropic key using Claude 3 Haiku
 def is_valid_anthropic_key(api_key: str) -> tuple[bool, str]:
     try:
         client = anthropic.Anthropic(api_key=api_key)
@@ -31,16 +31,25 @@ def is_valid_anthropic_key(api_key: str) -> tuple[bool, str]:
     except Exception as e:
         return False, str(e)
 
-# Identify platform by trying OpenAI, DeepSeek, Anthropic
+# Detect platform
 def identify_platform(key):
-    if key.startswith("sk-") or key.startswith("pk-"):
-        # Try OpenAI
+    # First check for Anthropic
+    if key.startswith("sk-ant-"):
+        valid, error = is_valid_anthropic_key(key)
+        if valid:
+            return "Anthropic"
+        else:
+            st.error("❌ Anthropic key validation failed:")
+            st.code(error)
+            return "Unknown or Invalid Anthropic Key"
+
+    # Then try OpenAI and DeepSeek
+    elif key.startswith("sk-") or key.startswith("pk-"):
         try:
             client = OpenAI(api_key=key)
             client.models.list()
             return "OpenAI"
         except Exception as e_openai:
-            # Try DeepSeek
             try:
                 client = OpenAI(api_key=key, base_url="https://api.deepseek.com")
                 client.models.list()
@@ -50,20 +59,11 @@ def identify_platform(key):
                 st.code(f"OpenAI: {e_openai}\nDeepSeek: {e_deepseek}")
                 return "Unknown or Invalid Key"
 
-    elif key.startswith("sk-ant-"):
-        valid, error = is_valid_anthropic_key(key)
-        if valid:
-            return "Anthropic"
-        else:
-            st.error("❌ Anthropic key validation failed:")
-            st.code(error)
-            return "Unknown or Invalid Anthropic Key"
-
     else:
         st.error("❌ Unknown key format. Could not match OpenAI, DeepSeek, or Anthropic.")
         return "Unknown Platform"
 
-# Button to trigger platform detection
+# When button is clicked
 if st.button("🔍 Identify API Platform"):
     if not api_key:
         st.error("Please enter an API key.")
