@@ -5,40 +5,47 @@ import requests
 # App Title and Description
 st.title("🔑 AAKA AI API Key Analyzer 🕵️‍♂️✨")
 st.markdown("""
-**AAKA (AI API Key Analyzer) automatically detects the platform associated with a given API key (OpenAI, DeepSeek, Anthropic) and provides a summary of available resources such as models, assistants, and vector stores.
+**AAKA (AI API Key Analyzer)** detecta automáticamente la plataforma asociada con una clave API (OpenAI, DeepSeek, Anthropic) y muestra información sobre los modelos, asistentes y vector stores disponibles.
 """)
 
 # Input: API Key
-api_key = st.text_input("Enter your API KEY", type="password")
+api_key = st.text_input("🔐 Ingresa tu API KEY", type="password")
 
-# Detect Platform from API Key
+# Plataforma
 def identify_platform(key):
-    if key.startswith("sk-ant-"):
-        headers = {"x-api-key": key}
-        response = requests.get("https://api.anthropic.com/v1/models", headers=headers)
-        return "Anthropic" if response.status_code == 200 else "Unknown or Invalid Anthropic Key"
-    elif key.startswith("ds-"):
-        headers = {"Authorization": f"Bearer {key}"}
-        response = requests.get("https://api.deepseek.com/v1/models", headers=headers)
-        return "DeepSeek" if response.status_code == 200 else "Unknown or Invalid DeepSeek Key"
-    elif key.startswith("sk-"):
+    # Intentar primero con OpenAI
+    if key.startswith("sk-") or key.startswith("pk-"):
         openai.api_key = key
         try:
             openai.models.list()
             return "OpenAI"
         except Exception:
-            return "Unknown or Invalid OpenAI Key"
+            # Si no funciona como OpenAI, intentamos DeepSeek
+            headers = {"Authorization": f"Bearer {key}"}
+            try:
+                response = requests.get("https://api.deepseek.com/openai/v1/models", headers=headers)
+                if response.status_code == 200:
+                    return "DeepSeek"
+            except Exception:
+                pass
+            return "Unknown or Invalid Key"
+    
+    elif key.startswith("sk-ant-"):
+        headers = {"x-api-key": key}
+        response = requests.get("https://api.anthropic.com/v1/models", headers=headers)
+        return "Anthropic" if response.status_code == 200 else "Unknown or Invalid Anthropic Key"
+    
     else:
         return "Unknown Platform"
 
 # On Button Click
-if st.button("Identify API Platform"):
+if st.button("🔍 Identificar Plataforma de API"):
     if not api_key:
-        st.error("Please enter an API KEY.")
+        st.error("Por favor ingresa una API Key.")
     else:
-        with st.spinner("Querying the API platform..."):
+        with st.spinner("Consultando plataforma..."):
             platform = identify_platform(api_key)
-            st.success(f"✅ Platform Identified: **{platform}**")
+            st.success(f"✅ Plataforma Detectada: **{platform}**")
 
             # ---- OPENAI ----
             if platform == "OpenAI":
@@ -52,9 +59,9 @@ if st.button("Identify API Platform"):
                         for assistant in assistants:
                             st.write(f"- {assistant.name} (ID: `{assistant.id}`)")
                     else:
-                        st.info("No assistants found.")
-                except Exception as e:
-                    st.error("Failed to fetch assistants.")
+                        st.info("No se encontraron asistentes.")
+                except Exception:
+                    st.error("No se pudo obtener la lista de assistants.")
 
                 # Vector Stores
                 try:
@@ -64,34 +71,35 @@ if st.button("Identify API Platform"):
                         for store in vector_stores:
                             st.write(f"- {store.name} (ID: `{store.id}`)")
                     else:
-                        st.info("No vector stores found.")
-                except Exception as e:
-                    st.error("Failed to fetch vector stores.")
+                        st.info("No se encontraron vector stores.")
+                except Exception:
+                    st.error("No se pudo obtener la lista de vector stores.")
 
-                # Models (moved to end)
+                # Models
                 try:
                     models = openai.models.list().data
-                    st.subheader("📚 Available Models")
-                    st.caption(f"Total Models: {len(models)}")
+                    st.subheader("📚 Modelos Disponibles")
+                    st.caption(f"Total de modelos: {len(models)}")
                     for model in models:
                         st.write(model.id)
                 except Exception:
-                    st.error("Failed to fetch models from OpenAI.")
+                    st.error("No se pudo obtener la lista de modelos.")
 
             # ---- DEEPSEEK ----
             elif platform == "DeepSeek":
                 headers = {"Authorization": f"Bearer {api_key}"}
-                response = requests.get("https://api.deepseek.com/v1/models", headers=headers)
+                response = requests.get("https://api.deepseek.com/openai/v1/models", headers=headers)
                 if response.status_code == 200:
                     models = response.json().get("data", [])
-                    st.subheader("📚 Available Models")
+                    st.subheader("📚 Modelos Disponibles")
                     if models:
                         for model in models:
                             st.write(model.get("id"))
                     else:
-                        st.info("No models found.")
+                        st.info("No se encontraron modelos.")
                 else:
-                    st.error("Failed to fetch models from DeepSeek.")
+                    st.error(f"No se pudo obtener la lista de modelos de DeepSeek.")
+                    st.code(response.text)
 
             # ---- ANTHROPIC ----
             elif platform == "Anthropic":
@@ -99,14 +107,14 @@ if st.button("Identify API Platform"):
                 response = requests.get("https://api.anthropic.com/v1/models", headers=headers)
                 if response.status_code == 200:
                     models = response.json().get("data", [])
-                    st.subheader("📚 Available Models")
+                    st.subheader("📚 Modelos Disponibles")
                     if models:
                         for model in models:
                             st.write(model.get("id"))
                     else:
-                        st.info("No models found.")
+                        st.info("No se encontraron modelos.")
                 else:
-                    st.error("Failed to fetch models from Anthropic.")
+                    st.error("No se pudo obtener la lista de modelos de Anthropic.")
 
             else:
-                st.warning("⚠️ Unable to fetch additional details for this platform.")
+                st.warning("⚠️ No fue posible obtener detalles adicionales para esta plataforma.")
